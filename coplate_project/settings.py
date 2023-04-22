@@ -10,8 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
-import os, json
-from django.core.exceptions import ImproperlyConfigured
+import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,24 +20,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-secret_file = os.path.join(BASE_DIR, 'secrets.json')
-
-with open(secret_file) as f:
-    secrets = json.loads(f.read())
-
-def get_secret(setting, secrets=secrets):
-    try:
-        return secrets[setting]
-    except KeyError:
-        error_msg = "Set tue {} environment variable".format(setting)
-        raise ImproperlyConfigured(error_msg)
-
-SECRET_KEY = get_secret("SECRET_KEY")
+SECRET_KEY = 'yxse)n^ji6z74i9n)lnvye@084(z1+%f6qz==9h3(^19$=7gbd'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -51,8 +38,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+
     'coplate',
-    'widget_tweaks',
+
+    'widget_tweaks', 
+
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -68,6 +58,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
     'coplate.middleware.ProfileSetupMiddleware',
 ]
 
@@ -108,7 +99,7 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "coplate.validators.CustomPasswordValidator",
+        'NAME': 'coplate.validators.CustomPasswordValidator',
     },
 ]
 
@@ -131,15 +122,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 MEDIA_URL = '/uploads/'
+
 
 # Auth settings
 
 AUTH_USER_MODEL = 'coplate.User'
 
 AUTHENTICATION_BACKENDS = [
-
     # Needed to login by username in Django admin, regardless of `allauth`
     'django.contrib.auth.backends.ModelBackend',
 
@@ -147,26 +140,19 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
+LOGIN_URL = 'account_login'
 ACCOUNT_SIGNUP_REDIRECT_URL = 'profile-set'
 LOGIN_REDIRECT_URL = 'index'
-LOGIN_URL = 'account_login'
 ACCOUNT_LOGOUT_ON_GET = True
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_SESSION_REMEMBER = True
-# ACCOUNT_SIGNUP_FORM_CLASS = 'coplate.forms.SignupForm'
 ACCOUNT_PASSWORD_INPUT_RENDER_VALUE = True
+
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = 'account_email_confirmation_done'
 ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = 'account_email_confirmation_done'
 ACCOUNT_EMAIL_SUBJECT_PREFIX = ''
-
-# Email settings
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'aebong54@gmail.com'
-EMAIL_HOST_PASSWORD = 'fckjrfhdsrzmfvvr'
+ 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
