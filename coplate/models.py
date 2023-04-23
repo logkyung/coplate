@@ -20,7 +20,7 @@ class User(AbstractUser):
 
 
 class Review(models.Model):
-    title = models.CharField(max_length=35)
+    title = models.CharField(max_length=30)
     restaurant_name = models.CharField(max_length=20)
     restaurant_link = models.URLField(validators=[validate_restaurant_link])
 
@@ -44,4 +44,14 @@ class Review(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Comment(models.Model):
+    content = models.TextField(max_length=300, blank=False)
+    dt_created = models.DateTimeField(auto_now_add=True)
+    dt_updated = models.DateTimeField(auto_now=True)
+
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    review = models.ForeignKey(Review, on_delete=models.CASCADE)
 
