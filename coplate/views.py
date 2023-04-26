@@ -14,8 +14,8 @@ from braces.views import LoginRequiredMixin, UserPassesTestMixin
 from allauth.account.views import PasswordChangeView
 from allauth.account.models import EmailAddress
 
-from .models import Review, User
-from .forms import ReviewForm, ProfileForm
+from .models import Review, User, Comment
+from .forms import ReviewForm, ProfileForm, CommentForm
 from .functions import confirmation_required_redirect
 
 
@@ -38,6 +38,11 @@ class ReviewDetailView(DetailView):
     template_name = 'coplate/review_detail.html'
     pk_url_kwarg = 'review_id'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = CommentForm()
+        return context
+
 
 class ReviewCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Review
@@ -53,7 +58,7 @@ class ReviewCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 
     def get_success_url(self):
         return reverse('review-detail', kwargs={'review_id': self.object.id})
- 
+
     def test_func(self, user):
         return EmailAddress.objects.filter(user=user, verified=True).exists()
         
@@ -89,6 +94,26 @@ class ReviewDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def test_func(self, user):
         review = self.get_object()
         return review.author == user
+
+
+class CommentCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    http_method_names = ['post']
+    model = Comment
+    form_class = CommentForm
+
+    redirect_unauthenticated_users = True
+    raise_exception = confirmation_required_redirect
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        form.instance.review = Review.objects.get(id=self.kwargs.get('review_id'))
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('review-detail', kwargs={'review_id': self.kwargs.get('review_id')})
+
+    def test_func(self, user):
+        return EmailAddress.objects.filter(user=user, verified=True).exists()
 
 
 class ProfileView(DetailView):

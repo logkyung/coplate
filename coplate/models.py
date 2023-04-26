@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from .validators import validate_no_special_characters, validate_restaurant_link
 
 # Create your models here.
@@ -17,7 +17,12 @@ class User(AbstractUser):
     profile_pic = models.ImageField(default="default_profile_pic.jpg", upload_to="profile_pics")
     intro = models.CharField(max_length=60, blank=True)
 
-    following = models.ManyToManyField('self', symmetrical=False, blank=True)
+    following = models.ManyToManyField(
+        'self', 
+        symmetrical=False, 
+        blank=True, 
+        related_name='followers'
+    )
 
     def __str__(self):
         return self.email
@@ -44,7 +49,9 @@ class Review(models.Model):
     dt_created = models.DateTimeField(auto_now_add=True)
     dt_updated = models.DateTimeField(auto_now=True)
 
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
+
+    likes = GenericRelation('Like', related_query_name='review')
 
     def __str__(self):
         return self.title
@@ -58,8 +65,10 @@ class Comment(models.Model):
     dt_created = models.DateTimeField(auto_now_add=True)
     dt_updated = models.DateTimeField(auto_now=True)
 
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    review = models.ForeignKey(Review, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='comments')
+
+    likes = GenericRelation('Like', related_query_name='comment')
 
     def __str__(self):
         return self.content[:30]
@@ -70,7 +79,7 @@ class Comment(models.Model):
 
 class Like(models.Model):
     dt_created = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='likes')
     
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
