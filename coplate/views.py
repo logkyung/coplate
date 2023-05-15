@@ -24,6 +24,9 @@ class IndexView(View):
     def get(self, request, *args, **kwargs):
         context = {}
         context['latest_reviews'] = Review.objects.all()[:4]
+        user = self.request.user
+        if user.is_authenticated:
+            context['latest_following_reviews'] = Review.objects.filter(author__followers=user)[:4]
         return render(request, 'coplate/index.html', context)
 
 
@@ -32,6 +35,16 @@ class ReviewListView(ListView):
     context_object_name = 'reviews'
     template_name = 'coplate/review_list.html'
     paginate_by = 8
+
+
+class FollowingReviewListView(LoginRequiredMixin, ListView):
+    model = Review
+    context_object_name = 'following_reviews'
+    template_name = 'coplate/following_review_list.html'
+    paginate_by = 8
+
+    def get_queryset(self):
+        return Review.objects.filter(author__followers=self.request.user)
 
 
 class ReviewDetailView(DetailView):
@@ -142,7 +155,56 @@ class ProfileView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['user_reviews'] = Review.objects.filter(author__id=self.kwargs.get('user_id'))[:4]
+        user = self.request.user
+        profile_user_id = self.kwargs.get('user_id')
+        if user.is_authenticated:
+          context['is_following'] = user.following.filter(id=profile_user_id).exists()
+        context['user_reviews'] = Review.objects.filter(author__id=profile_user_id)[:4]
+        return context
+
+
+class ProcessFollowView(LoginAndVerificationRequiredMixin, View):
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        user = self.request.user
+        profile_user_id = self.kwargs.get('user_id')
+        if user.following.filter(id=profile_user_id).exists():
+            user.following.remove(profile_user_id)
+        else:
+            user.following.add(profile_user_id)
+        return redirect('profile', user_id=profile_user_id)
+
+
+class FollowingListView(ListView):
+    model = User
+    template_name = 'coplate/following_list.html'
+    context_object_name = 'following'
+    paginate_by = 10
+
+    def get_queryset(self):
+        profile_user = get_object_or_404(User, pk=self.kwargs.get('user_id'))
+        return profile_user.following.all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['profile_user_id'] = self.kwargs.get('user_id')
+        return context
+
+
+class FollowerListView(ListView):
+    model = User
+    template_name = 'coplate/follower_list.html'
+    context_object_name = 'followers'
+    paginate_by = 10
+
+    def get_queryset(self):
+        profile_user = get_object_or_404(User, pk=self.kwargs.get('user_id'))
+        return profile_user.followers.all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['profile_user_id'] = self.kwargs.get('user_id')
         return context
 
 
